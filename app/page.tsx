@@ -6,6 +6,7 @@ export default function Home() {
   const components = [
     { name: 'Task Panel', path: '/taskpanel', description: 'Draggable task panel with physics' },
     { name: 'Node Editor Canvas', path: '/nodegrid', description: 'Interactive node editor with connections and physics' },
+    { name: 'Dial Menu', path: '/dialmenu', description: 'Radial node-spawn menu with tilt, scramble text, and paged categories' },
   ];
 
   return (
