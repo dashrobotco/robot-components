@@ -83,9 +83,42 @@ An interactive node editor with draggable panels, connections, and physics.
 - **Dynamic dot grid** that responds to panel movement
 - **WebGL noise overlay** for visual texture
 
+### Dial Menu
+
+A radial node-spawn menu with 3D mouse tilt, paged categories, and tactile sound feedback.
+
+```tsx
+import { DialMenu, type DialNodeType } from 'robot-components';
+
+function App() {
+  const [menu, setMenu] = useState({ isOpen: false, position: { x: 0, y: 0 } });
+
+  return (
+    <div onClick={(e) => setMenu({ isOpen: true, position: { x: e.clientX, y: e.clientY } })}>
+      <DialMenu
+        isOpen={menu.isOpen}
+        position={menu.position}
+        onSelect={(type: DialNodeType) => console.log('Selected:', type)}
+        onClose={() => setMenu(m => ({ ...m, isOpen: false }))}
+      />
+    </div>
+  );
+}
+```
+
+#### Features
+
+- **3D mouse tilt** with per-button parallax and brightness response
+- **Mouse-follow drift** with quintic gravity once the cursor leaves the ring
+- **Scroll/trackpad paging** through 7 categories (Core, AI, Data, Logic, Design, Photo, Video)
+- **Scramble-text** page-name reveal and rotating segment indicator
+- **Staggered reveal** of items with pitched click feedback
+- **Click-outside / Esc** to dismiss
+- Requires `/images/radial-decoration.svg` and `/hoverfx2.mp3` in your `public/` folder
+
 ### Demo
 
-Run the demo to see both components in action:
+Run the demo to see all components in action:
 
 ```bash
 npm run dev
@@ -95,6 +128,7 @@ Then visit:
 - http://localhost:3000 - Component overview
 - http://localhost:3000/taskpanel - Task Panel demo
 - http://localhost:3000/nodegrid - Node Editor demo
+- http://localhost:3000/dialmenu - Dial Menu demo
 
 ## Peer Dependencies
 
