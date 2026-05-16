@@ -1,26 +1,20 @@
 'use client';
 
 import './dialmenu.css';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { DialMenu, type DialNodeType } from '../../src/dialmenu/DialMenu';
-
-interface SpawnedNode {
-  id: string;
-  type: DialNodeType;
-  x: number;
-  y: number;
-}
+import { DialMenu, type DialMenuHandle, type DialNodeType } from '../../src/dialmenu/DialMenu';
+import { useDualSenseDialControls } from './useDualSenseDialControls';
 
 export default function DialMenuDemo() {
   const [menu, setMenu] = useState<{ isOpen: boolean; position: { x: number; y: number } }>({
     isOpen: false,
     position: { x: 0, y: 0 },
   });
-  const [spawned, setSpawned] = useState<SpawnedNode[]>([]);
   const [lastSelected, setLastSelected] = useState<DialNodeType | null>(null);
-  const idRef = useRef(0);
+  const dialMenuRef = useRef<DialMenuHandle>(null);
+  const virtualCursorRef = useRef<HTMLDivElement>(null);
 
   const openAt = useCallback((x: number, y: number) => {
     setMenu({ isOpen: true, position: { x, y } });
@@ -32,12 +26,8 @@ export default function DialMenuDemo() {
 
   const handleSelect = useCallback((type: DialNodeType) => {
     setLastSelected(type);
-    setSpawned((prev) => [
-      ...prev,
-      { id: `n${idRef.current++}`, type, x: menu.position.x, y: menu.position.y },
-    ]);
     setMenu((prev) => ({ ...prev, isOpen: false }));
-  }, [menu.position.x, menu.position.y]);
+  }, []);
 
   // Open menu on left click anywhere on the empty stage
   const handleStageMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -57,13 +47,13 @@ export default function DialMenuDemo() {
     openAt(e.clientX, e.clientY);
   }, [openAt]);
 
-  // Open in the center on first mount so the demo is immediately visible
-  useEffect(() => {
-    const t = setTimeout(() => {
-      openAt(window.innerWidth / 2, window.innerHeight / 2);
-    }, 250);
-    return () => clearTimeout(t);
-  }, [openAt]);
+  useDualSenseDialControls({
+    menu,
+    dialMenuRef,
+    cursorRef: virtualCursorRef,
+    openAt,
+    closeMenu: handleClose,
+  });
 
   return (
     <div
@@ -121,22 +111,6 @@ export default function DialMenuDemo() {
         <div
           style={{
             pointerEvents: 'none',
-            padding: '8px 14px',
-            borderRadius: 999,
-            background: 'rgba(28, 28, 28, 0.6)',
-            border: '1px solid #262626',
-            backdropFilter: 'blur(8px)',
-            color: '#a3a3a3',
-            fontSize: 12,
-            letterSpacing: 0.3,
-          }}
-        >
-          Click anywhere to open the dial · scroll to switch pages · esc to close
-        </div>
-
-        <div
-          style={{
-            pointerEvents: 'none',
             minWidth: 120,
             textAlign: 'right',
             fontSize: 12,
@@ -156,61 +130,32 @@ export default function DialMenuDemo() {
         </div>
       </div>
 
-      {/* Spawned node markers - just a subtle visual to show selections happened */}
-      {spawned.map((node) => (
-        <div
-          key={node.id}
-          style={{
-            position: 'fixed',
-            left: node.x,
-            top: node.y,
-            transform: 'translate(-50%, -50%)',
-            padding: '6px 10px',
-            borderRadius: 10,
-            background: '#1f1f1f',
-            border: '1px solid #2e2e2e',
-            color: '#d4d4d4',
-            fontSize: 11,
-            letterSpacing: 0.5,
-            textTransform: 'uppercase',
-            boxShadow: '0 8px 24px -8px rgba(0,0,0,0.6)',
-            pointerEvents: 'none',
-          }}
-        >
-          {node.type}
-        </div>
-      ))}
-
-      {/* Reset button */}
-      {spawned.length > 0 && (
-        <button
-          data-dial-ui
-          onClick={(e) => { e.stopPropagation(); setSpawned([]); }}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '8px 14px',
-            borderRadius: 10,
-            background: '#1f1f1f',
-            border: '1px solid #2e2e2e',
-            color: '#a3a3a3',
-            fontSize: 12,
-            cursor: 'pointer',
-            zIndex: 11,
-          }}
-        >
-          Clear {spawned.length} node{spawned.length === 1 ? '' : 's'}
-        </button>
-      )}
-
       <div data-dial-ui>
+        <div
+          ref={virtualCursorRef}
+          style={{
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            width: 14,
+            height: 14,
+            borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.65)',
+            background: 'rgba(255,255,255,0.16)',
+            boxShadow: '0 0 18px rgba(255,255,255,0.18)',
+            pointerEvents: 'none',
+            zIndex: 9,
+            transform: 'translate3d(50vw, 50vh, 0) translate(-50%, -50%)',
+            willChange: 'transform',
+          }}
+        />
         <DialMenu
+          ref={dialMenuRef}
           isOpen={menu.isOpen}
           position={menu.position}
           onSelect={handleSelect}
           onClose={handleClose}
+          externalPointerFollow={false}
         />
       </div>
     </div>

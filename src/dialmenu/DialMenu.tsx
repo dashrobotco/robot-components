@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Terminal, MessageSquare, Eye, FolderOpen, Scan, PenLine,
@@ -131,6 +131,24 @@ const DIAL_ITEM_RADIUS = 125;        // For item placement (spread out from cent
 const DIAL_ITEM_SIZE = 64;
 const DIAL_START_ANGLE = -90;
 
+export interface DialMenuControlPoint {
+  x: number;
+  y: number;
+}
+
+export interface DialMenuHandle {
+  setExternalPointer: (point: DialMenuControlPoint | null) => void;
+  confirmActive: () => void;
+  nextPage: () => void;
+  previousPage: () => void;
+}
+
+export const DIAL_MENU_CONTROL_LAYOUT = {
+  itemCount: 6,
+  startAngleDeg: DIAL_START_ANGLE,
+  pointerRadius: DIAL_ITEM_RADIUS + 40,
+} as const;
+
 // Text scramble effect ---------------------------------------------------
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';
 
@@ -209,16 +227,19 @@ export interface DialMenuProps {
   decorationSrc?: string;
   /** Notify parent of item world positions (used by external grid deformation effects). */
   onItemsUpdate?: (items: Array<{ x: number; y: number; radius: number }>) => void;
+  /** Whether external pointer input can move the menu like the mouse-follow effect. */
+  externalPointerFollow?: boolean;
 }
 
-export const DialMenu = memo(function DialMenu({
+const DialMenuComponent = forwardRef<DialMenuHandle, DialMenuProps>(function DialMenu({
   isOpen,
   position,
   onSelect,
   onClose,
   decorationSrc = '/images/radial-decoration.svg',
   onItemsUpdate,
-}: DialMenuProps) {
+  externalPointerFollow = true,
+}, ref) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [hoveredItem, setHoveredItem] = useState<DialNodeType | null>(null);
   const [revealedCount, setRevealedCount] = useState(0);
@@ -241,6 +262,8 @@ export const DialMenu = memo(function DialMenu({
   const ringRotationRef = useRef<SVGSVGElement>(null);
   const contentParallaxRefs = useRef<(HTMLDivElement | null)[]>([]);
   const buttonBgRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const hoveredItemRef = useRef<DialNodeType | null>(null);
+  const externalPointerRef = useRef<DialMenuControlPoint | null>(null);
 
   const onItemsUpdateRef = useRef(onItemsUpdate);
   onItemsUpdateRef.current = onItemsUpdate;
@@ -248,6 +271,54 @@ export const DialMenu = memo(function DialMenu({
   const currentPageItems = DIAL_MENU_PAGES[currentPage].items;
   const itemCount = currentPageItems.length;
   const pageCount = DIAL_MENU_PAGES.length;
+
+  const setActiveItem = (type: DialNodeType | null) => {
+    if (hoveredItemRef.current === type) return;
+    hoveredItemRef.current = type;
+    setHoveredItem(type);
+  };
+
+  const updateExternalPointer = (point: DialMenuControlPoint | null) => {
+    externalPointerRef.current = point;
+    if (!point) {
+      setActiveItem(null);
+      return;
+    }
+
+    const inputAngle = Math.atan2(point.y - position.y, point.x - position.x);
+    const inputAngleDegrees = inputAngle * (180 / Math.PI);
+    const segmentAngle = 360 / itemCount;
+    const nextIndex = Math.round((inputAngleDegrees - DIAL_START_ANGLE) / segmentAngle);
+    const normalizedIndex = ((nextIndex % itemCount) + itemCount) % itemCount;
+    setActiveItem(currentPageItems[normalizedIndex]?.type ?? null);
+  };
+
+  const confirmActive = () => {
+    const activeItem = hoveredItemRef.current;
+    if (!activeItem) return;
+
+    dialSounds.playRandomized(0.04, 0.85, 0.1);
+    onSelect(activeItem);
+  };
+
+  const changePage = (direction: 1 | -1) => {
+    const segmentAngle = 360 / pageCount;
+
+    setScrollDirection(direction > 0 ? 'down' : 'up');
+    setCurrentPage((prev) => (prev + direction + pageCount) % pageCount);
+    setRotationKey((key) => key + 1);
+    setRingRotation((rotation) => rotation - direction * segmentAngle);
+    setActiveItem(null);
+    externalPointerRef.current = null;
+    dialSounds.play(0.03, direction > 0 ? 1.1 : 0.9);
+  };
+
+  useImperativeHandle(ref, () => ({
+    setExternalPointer: updateExternalPointer,
+    confirmActive,
+    nextPage: () => changePage(1),
+    previousPage: () => changePage(-1),
+  }));
 
   // Initialize the audio context on first open (after user gesture).
   useEffect(() => {
@@ -273,19 +344,10 @@ export const DialMenu = memo(function DialMenu({
 
       lastScrollTimeRef.current = now;
 
-      const segmentAngle = 360 / pageCount;
       if (delta > 0) {
-        setScrollDirection('down');
-        setCurrentPage((prev) => (prev + 1) % pageCount);
-        setRotationKey((k) => k + 1);
-        setRingRotation((r) => r - segmentAngle);
-        dialSounds.play(0.03, 1.1);
+        changePage(1);
       } else {
-        setScrollDirection('up');
-        setCurrentPage((prev) => (prev - 1 + pageCount) % pageCount);
-        setRotationKey((k) => k + 1);
-        setRingRotation((r) => r + segmentAngle);
-        dialSounds.play(0.03, 0.9);
+        changePage(-1);
       }
     };
 
@@ -301,6 +363,8 @@ export const DialMenu = memo(function DialMenu({
       setCurrentPage(0);
       setRotationKey(0);
       setRingRotation(0);
+      setActiveItem(null);
+      externalPointerRef.current = null;
     }
   }, [isOpen]);
 
@@ -340,6 +404,17 @@ export const DialMenu = memo(function DialMenu({
     };
 
     const animate = () => {
+      const externalPointer = externalPointerRef.current;
+      if (externalPointer) {
+        mouseRef.x = externalPointer.x;
+        mouseRef.y = externalPointer.y;
+        if (externalPointerFollow) {
+          targetPositionRef.current = externalPointer;
+        } else {
+          targetPositionRef.current = spawnPositionRef.current;
+        }
+      }
+
       const current = currentPositionRef.current;
       const target = targetPositionRef.current;
       const spawn = spawnPositionRef.current;
@@ -810,10 +885,10 @@ export const DialMenu = memo(function DialMenu({
                       delay: isInitialReveal ? 0 : index * 0.015,
                     }}
                     onMouseEnter={() => {
-                      setHoveredItem(item.type);
+                      setActiveItem(item.type);
                       dialSounds.play(0.015, 1.2);
                     }}
-                    onMouseLeave={() => setHoveredItem(null)}
+                    onMouseLeave={() => setActiveItem(null)}
                     onClick={(e) => {
                       e.stopPropagation();
                       dialSounds.playRandomized(0.04, 0.85, 0.1);
@@ -885,3 +960,5 @@ export const DialMenu = memo(function DialMenu({
     </AnimatePresence>
   );
 });
+
+export const DialMenu = memo(DialMenuComponent);
