@@ -20,6 +20,15 @@ export default function ForgeStage({ slug }: { slug: string }) {
   const zoomOut = useCallback(() => setZoom((z) => clamp(z - ZOOM_STEP, ZOOM_MIN, ZOOM_MAX)), []);
   const zoomReset = useCallback(() => setZoom(1), []);
 
+  // Expose the current zoom as a CSS variable so portaled components
+  // (which sit outside this scaled wrapper) can scale themselves to match.
+  useEffect(() => {
+    document.documentElement.style.setProperty('--forge-zoom', String(zoom));
+    return () => {
+      document.documentElement.style.removeProperty('--forge-zoom');
+    };
+  }, [zoom]);
+
   // Cmd/Ctrl +/- and 0 for zoom (preventDefault so browser zoom doesn't fire)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
