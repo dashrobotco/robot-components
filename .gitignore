@@ -30,5 +30,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Forge — WIP components are private, the scaffold (/app/forge) ships publicly
-/src/_forge/
+# Forge — WIP components live in a private submodule at src/_forge
+# (the submodule reference is tracked, contents are in dashrobotco/robot-forge)
