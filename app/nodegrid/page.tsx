@@ -1382,7 +1382,7 @@ function FloatingPanel({
     else if (nearRight) edge = 'e';
 
     if (edge) {
-      handleTouchResizeStart(touch, edge);
+      handleTouchResizeStart(touch as unknown as Touch, edge);
       return;
     }
 
