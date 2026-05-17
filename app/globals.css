@@ -29,13 +29,54 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Design system color variables */
 :root {
-  --grey-6: #3a3a3a;
-  --grey-8: #2f2f2f;
+  /* Robot grey scale (ported from robot-builder for lab parity) */
+  --grey-1: #0D0D0D;   /* Deepest backgrounds, overlays */
+  --grey-2: #141414;   /* Deep backgrounds */
+  --grey-3: #171717;   /* Card backgrounds, containers */
+  --grey-4: #1c1c1c;   /* Elevated surfaces */
+  --grey-5: #202020;   /* Primary page background */
+  --grey-6: #252525;   /* Secondary containers, panels */
+  --grey-7: #2B2B2B;   /* Borders, dividers */
+  --grey-8: #3D3D3D;   /* Hover states, interactive borders */
+  --grey-9: #444444;   /* Active borders, stronger dividers */
+  --grey-10: #565656;  /* Disabled/muted icons */
+  --grey-11: #808080;  /* Muted text, placeholders */
+  --grey-12: #A1A1A1;  /* Secondary text, labels */
+  --grey-13: #DCDCDC;  /* Description text */
+  --grey-14: #E5E5E5;  /* Primary text */
+
+  --text-primary: var(--grey-14);
+  --text-muted: var(--grey-11);
 }
 
 /* Button skin */
 .btn-skin {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, var(--grey-6) 0%, var(--grey-8) 100%);
+  background: linear-gradient(180deg, #3a3a3a 0%, #2f2f2f 100%);
   background-clip: padding-box;
+}
+
+/* Tweakpane dark theme (applies to all lab demos + taskpanel) */
+:root {
+  --tp-base-background-color: rgba(38, 38, 38, 0.80);
+  --tp-base-shadow-color: rgba(10, 10, 10, 0.2);
+  --tp-button-background-color: #d4d4d4;
+  --tp-button-background-color-active: #a3a3a3;
+  --tp-button-background-color-focus: #d4d4d4;
+  --tp-button-background-color-hover: #e5e5e5;
+  --tp-button-foreground-color: rgba(23, 23, 23, 0.80);
+  --tp-container-background-color: rgba(64, 64, 64, 0.30);
+  --tp-container-background-color-active: rgba(64, 64, 64, 0.30);
+  --tp-container-background-color-focus: rgba(82, 82, 82, 0.30);
+  --tp-container-background-color-hover: rgba(82, 82, 82, 0.30);
+  --tp-container-foreground-color: #737373;
+  --tp-groove-foreground-color: rgba(10, 10, 10, 0.20);
+  --tp-input-background-color: rgba(10, 10, 10, 0.30);
+  --tp-input-background-color-active: rgba(23, 23, 23, 0.30);
+  --tp-input-background-color-focus: rgba(23, 23, 23, 0.30);
+  --tp-input-background-color-hover: rgba(23, 23, 23, 0.30);
+  --tp-input-foreground-color: #737373;
+  --tp-label-foreground-color: #737373;
+  --tp-monitor-background-color: rgba(10, 10, 10, 0.30);
+  --tp-monitor-foreground-color: #525252;
 }
