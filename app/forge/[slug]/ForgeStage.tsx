@@ -58,7 +58,13 @@ export default function ForgeStage({ slug }: { slug: string }) {
           overflow: 'hidden',
           backgroundColor: '#0d0d0d',
           backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)`,
-          backgroundSize: '24px 24px',
+          // Spacing reads from --forge-grid-spacing so components (e.g. Loader)
+          // can drive it; defaults to 24px when unset.
+          backgroundSize: 'var(--forge-grid-spacing, 24px) var(--forge-grid-spacing, 24px)',
+          // Anchor a dot exactly at the canvas center (the radial gradient
+          // paints at each tile's center, and 50%/50% puts a tile center on
+          // the container's center). Future preloaders can rely on this.
+          backgroundPosition: 'center center',
         }}
       >
         {/* Top bar: back + zoom */}
