@@ -4002,6 +4002,8 @@ export default function GridPlayground() {
           if (lineSegmentsIntersect(lastX, lastY, currX, currY, seg.x1, seg.y1, seg.x2, seg.y2)) {
             setCutConnections(prev => [...prev, {
               ...conn,
+              cutX: currX,
+              cutY: currY,
               cutTime: now,
             }]);
             setConnections(prev => prev.filter(c => c.id !== conn.id));
