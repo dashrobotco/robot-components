@@ -30,6 +30,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Forge — WIP components live in a private submodule at src/_forge
-# (the submodule reference is tracked, contents are in dashrobotco/robot-forge)
+# Forge — WIP components are private (gitignored here, version-controlled
+# in the separate dashrobotco/robot-forge repo). Deploy via `vercel deploy --prod`.
+/src/_forge/
 .vercel
